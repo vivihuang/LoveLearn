@@ -18,3 +18,7 @@
 
 #Ignore idea files
 .idea/
+
+#Ignore nodejs dependency
+node_modules/
+.DS_Store
