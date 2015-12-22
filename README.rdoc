@@ -13,6 +13,12 @@ Things you may want to cover:
 
 * Database creation
 
+    Install postgres locally:
+    1) Create root user :
+       `createuser -s -r root`
+    2) Create database :
+       `createdb love_learn_dev`
+
 * Database initialization
 
 * How to run the test suite
