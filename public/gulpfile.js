@@ -1,28 +1,25 @@
-/*!
- * gulp
- * $ npm install gulp-ruby-sass gulp-autoprefixer gulp-minify-css gulp-jshint gulp-concat gulp-uglify gulp-imagemin gulp-notify gulp-rename gulp-livereload gulp-cache del --save-dev
- */
-
 // Load plugins
 var gulp = require('gulp'),
     sass = require('gulp-ruby-sass'),
     autoprefixer = require('gulp-autoprefixer'),
     minifycss = require('gulp-minify-css'),
-    jshint = require('gulp-jshint'),
+    streamify = require('gulp-streamify'),
     uglify = require('gulp-uglify'),
     imagemin = require('gulp-imagemin'),
     rename = require('gulp-rename'),
-    concat = require('gulp-concat'),
+    source = require('vinyl-source-stream'),
     notify = require('gulp-notify'),
     cache = require('gulp-cache'),
     livereload = require('gulp-livereload'),
-    del = require('del');
+    browserify = require('browserify'),
+    del = require('del'),
+    reactify = require('reactify');
 
 // Styles
 gulp.task('styles', function() {
   return sass('src/styles/main.scss', { style: 'expanded' })
     .pipe(autoprefixer('last 2 version'))
-    .pipe(gulp.dest('static/styles'))
+    //.pipe(gulp.dest('static/styles'))
     .pipe(rename({ suffix: '.min' }))
     .pipe(minifycss())
     .pipe(gulp.dest('static/styles'))
@@ -30,15 +27,15 @@ gulp.task('styles', function() {
 });
 
 // Scripts
-gulp.task('scripts', function() {
-  return gulp.src('src/**/*.js')
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter('default'))
-    .pipe(concat('main.js'))
-    .pipe(gulp.dest('static/scripts'))
+gulp.task('src', function() {
+  browserify('src/index.jsx')
+    .transform(reactify)
+    .bundle()
+    .pipe(source('main.js'))
+    //.pipe(gulp.dest('static/src'))
     .pipe(rename({ suffix: '.min' }))
-    .pipe(uglify())
-    .pipe(gulp.dest('static/scripts'))
+    .pipe(streamify(uglify()))
+    .pipe(gulp.dest('static/src'))
     .pipe(notify({ message: 'Scripts task complete' }));
 });
 
@@ -52,12 +49,12 @@ gulp.task('images', function() {
 
 // Clean
 gulp.task('clean', function() {
-  return del(['static/styles', 'static/scripts', 'static/images']);
+  return del(['static/styles', 'static/src', 'static/images']);
 });
 
 // Default task
 gulp.task('default', ['clean'], function() {
-  gulp.start('styles', 'scripts', 'images');
+  gulp.start('styles', 'src', 'images');
 });
 
 // Watch
@@ -66,7 +63,9 @@ gulp.task('dev', ['default'], function() {
   gulp.watch('src/styles/**/*.scss', ['styles']);
 
   // Watch .js files
-  gulp.watch('src/**/*.js', ['scripts']);
+  gulp.watch('src/**/*.jsx', ['src']);
+
+  gulp.watch('src/**/*.js', ['src']);
 
   // Watch image files
   gulp.watch('src/images/**/*', ['images']);
